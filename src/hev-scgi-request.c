@@ -37,6 +37,8 @@ struct _HevSCGIRequestPrivate
 	gchar *header_buffer;
 	gsize header_buffer_size;
 	gsize header_buffer_handle_size;
+	gsize header_size;
+	gboolean zero_read;
 };
 
 G_DEFINE_TYPE(HevSCGIRequest, hev_scgi_request, G_TYPE_OBJECT);
@@ -114,6 +116,8 @@ static void hev_scgi_request_init(HevSCGIRequest * self)
 	priv->header_buffer = NULL;
 	priv->header_buffer_size = 0;
 	priv->header_buffer_handle_size = 0;
+	priv->header_size = 0;
+	priv->zero_read = TRUE;
 }
 
 GObject * hev_scgi_request_new(void)
@@ -156,8 +160,10 @@ void hev_scgi_request_read_header(HevSCGIRequest *self,
 	g_object_set_data(G_OBJECT(self), "callback", callback);
 	g_object_set_data(G_OBJECT(self), "user_data", user_data);
 	hev_scgi_request_header_buffer_alloc(self, 4096);
+
+	priv->header_size = 16;
 	g_input_stream_read_async(priv->input_stream,
-				priv->header_buffer, 16, 0, NULL,
+				priv->header_buffer, priv->header_size, 0, NULL,
 				hev_scgi_request_input_stream_read_async_handler,
 				self);
 }
@@ -211,37 +217,64 @@ static void hev_scgi_request_input_stream_read_async_handler(GObject *source_obj
 
 	size = g_input_stream_read_finish(G_INPUT_STREAM(source_object),
 				res, NULL);
+	priv->header_buffer_handle_size += size;
 
-	if(0 == priv->header_buffer_handle_size)
+	/* Call callback when connection closed by remote or error */
+	if(0 >= size)
+	{
+		callback(self, data);
+		return;
+	}
+
+	/* Continue read until enough */
+	if(priv->header_buffer_handle_size < priv->header_size)
+	{
+		g_input_stream_read_async(priv->input_stream,
+					priv->header_buffer+priv->header_buffer_handle_size,
+					priv->header_size-priv->header_buffer_handle_size,
+					0, NULL,
+					hev_scgi_request_input_stream_read_async_handler,
+					self);
+		return;
+	}
+
+	if(priv->zero_read)
 	{
 		if(g_regex_match_simple("\\d*:", priv->header_buffer, 0, 0))
 		{
 			gchar ** strs = NULL;
-			gsize header_size = 0;
 
 			strs = g_regex_split_simple(":", priv->header_buffer, 0, 0);
 
-			header_size = atoi(strs[0]);
-			priv->header_buffer_handle_size = size;
-			if(4096 < header_size)
-			  hev_scgi_request_header_buffer_alloc(self, header_size);
+			priv->header_size = atoi(strs[0]);
+			if(priv->header_buffer_size < priv->header_size)
+			  hev_scgi_request_header_buffer_alloc(self, priv->header_size);
 
 			g_strfreev(strs);
 
-			g_input_stream_read_async(priv->input_stream,
-						priv->header_buffer+size, header_size-size, 0, NULL,
-						hev_scgi_request_input_stream_read_async_handler,
-						self);
+			if(priv->header_buffer_handle_size < priv->header_size)
+			{
+				g_input_stream_read_async(priv->input_stream,
+							priv->header_buffer+priv->header_buffer_handle_size,
+							priv->header_size-priv->header_buffer_handle_size,
+							0, NULL,
+							hev_scgi_request_input_stream_read_async_handler,
+							self);
+				return;
+			}
 		}
-		else
-		  callback(self, data);
-	}
-	else
-	{
-		// TODO: Parse header
+		else /* Invalid request, just callback */
+		{
+			callback(self, data);
+			return;
+		}
 
-		callback(self, data);
+		priv->zero_read = FALSE;
 	}
+
+	// TODO: Parse header
+
+	callback(self, data);
 }
 
 static void hev_scgi_request_input_stream_close_async_handler(GObject *source_object,
