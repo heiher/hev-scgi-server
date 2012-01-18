@@ -17,6 +17,9 @@ enum
 	HEADER_STATUS_WRITED
 };
 
+static void hev_scgi_response_output_stream_close_async_handler(GObject *source_object,
+			GAsyncResult *res, gpointer user_data);
+
 #define HEV_SCGI_RESPONSE_GET_PRIVATE(obj)	(G_TYPE_INSTANCE_GET_PRIVATE((obj), HEV_TYPE_SCGI_RESPONSE, HevSCGIResponsePrivate))
 
 typedef struct _HevSCGIResponsePrivate HevSCGIResponsePrivate;
@@ -38,8 +41,10 @@ static void hev_scgi_response_dispose(GObject * obj)
 
 	if(priv->output_stream)
 	{
-		g_object_unref(priv->output_stream);
-		priv->output_stream = NULL;
+		g_output_stream_close_async(priv->output_stream,
+					0, NULL,
+					hev_scgi_response_output_stream_close_async_handler,
+					NULL);
 	}
 
 	G_OBJECT_CLASS(hev_scgi_response_parent_class)->dispose(obj);
@@ -125,5 +130,15 @@ void hev_scgi_response_write_header(HevSCGIResponse *self,
 	priv = HEV_SCGI_RESPONSE_GET_PRIVATE(self);
 	g_return_if_fail(NULL!=priv->output_stream);
 	g_return_if_fail(HEADER_STATUS_UNWRITE==priv->header_status);
+}
+
+static void hev_scgi_response_output_stream_close_async_handler(GObject *source_object,
+			GAsyncResult *res, gpointer user_data)
+{
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	g_output_stream_close_finish(G_OUTPUT_STREAM(source_object),
+				res, NULL);
+	g_object_unref(source_object);
 }
 

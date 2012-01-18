@@ -9,6 +9,11 @@
  */
 
 #include "hev-scgi-task-dispatcher.h"
+#include "hev-scgi-request.h"
+#include "hev-scgi-task.h"
+
+static void hev_scgi_task_dispatcher_dispatch(gpointer data,
+			gpointer user_data);
 
 #define HEV_SCGI_TASK_DISPATCHER_GET_PRIVATE(obj)	(G_TYPE_INSTANCE_GET_PRIVATE((obj), HEV_TYPE_SCGI_TASK_DISPATCHER, HevSCGITaskDispatcherPrivate))
 
@@ -81,6 +86,36 @@ GObject * hev_scgi_task_dispatcher_new(void)
 void hev_scgi_task_dispatcher_push(HevSCGITaskDispatcher *self,
 			GObject *scgi_task)
 {
+	HevSCGITaskDispatcherPrivate * priv = NULL;
+	GObject *scgi_request = NULL;
+
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	g_return_if_fail(HEV_IS_SCGI_TASK_DISPATCHER(self));
+	g_return_if_fail(HEV_IS_SCGI_TASK(scgi_task));
+	priv = HEV_SCGI_TASK_DISPATCHER_GET_PRIVATE(self);
+
+	g_object_ref(scgi_task);
+
+	g_object_set_data(scgi_task, "dispatcher", self);
+	scgi_request = hev_scgi_task_get_request(HEV_SCGI_TASK(scgi_task));
+	hev_scgi_request_read_header(HEV_SCGI_REQUEST(scgi_request),
+				hev_scgi_task_dispatcher_dispatch, scgi_task);
+}
+
+static void hev_scgi_task_dispatcher_dispatch(gpointer data,
+			gpointer user_data)
+{
+	HevSCGITaskDispatcher *self = NULL;
+	HevSCGITaskDispatcherPrivate * priv = NULL;
+	GObject *scgi_task = G_OBJECT(user_data);
+
+	self = HEV_SCGI_TASK_DISPATCHER(g_object_get_data(scgi_task,
+					"dispatcher"));
+	priv = HEV_SCGI_TASK_DISPATCHER_GET_PRIVATE(self);
+
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	g_object_unref(scgi_task);
 }
 
