@@ -18,6 +18,8 @@
 static gboolean socket_service_incoming_handler(GSocketService *service,
 			GSocketConnection *connection, GObject *source_object,
 			gpointer user_data);
+static void scgi_connection_manager_new_task_handler(HevSCGIConnectionManager *connection_manager,
+			GObject *scgi_task, gpointer user_data);
 
 #define HEV_SCGI_SERVER_GET_PRIVATE(obj)	(G_TYPE_INSTANCE_GET_PRIVATE((obj), HEV_TYPE_SCGI_SERVER, HevSCGIServerPrivate))
 
@@ -139,6 +141,9 @@ static void hev_scgi_server_init(HevSCGIServer * self)
 	if(!priv->scgi_connection_manager)
 	  g_critical("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
+	g_signal_connect(G_OBJECT(priv->scgi_connection_manager), "new_task",
+				G_CALLBACK(scgi_connection_manager_new_task_handler), self);
+
 	priv->scgi_task_dispatcher = hev_scgi_task_dispatcher_new();
 	if(!priv->scgi_task_dispatcher)
 	  g_critical("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
@@ -187,5 +192,17 @@ static gboolean socket_service_incoming_handler(GSocketService *service,
 					priv->scgi_connection_manager), connection);
 
 	return TRUE;
+}
+
+static void scgi_connection_manager_new_task_handler(HevSCGIConnectionManager *connection_manager,
+			GObject *scgi_task, gpointer user_data)
+{
+	HevSCGIServer *self = HEV_SCGI_SERVER(user_data);
+	HevSCGIServerPrivate *priv = HEV_SCGI_SERVER_GET_PRIVATE(self);
+
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	hev_scgi_task_dispatcher_push(HEV_SCGI_TASK_DISPATCHER(priv->scgi_task_dispatcher),
+				scgi_task);
 }
 

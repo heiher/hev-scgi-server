@@ -113,6 +113,8 @@ GSocketAddress * hev_scgi_config_get_address(HevSCGIConfig *self)
 	gchar *address = NULL;
 	GError *error = NULL;
 
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
 	g_return_val_if_fail(HEV_IS_SCGI_CONFIG(self), NULL);
 	priv = HEV_SCGI_CONFIG_GET_PRIVATE(self);
 

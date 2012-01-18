@@ -38,6 +38,8 @@ struct _HevSCGITaskDispatcherClass
 GType hev_scgi_task_dispatcher_get_type(void);
 
 GObject * hev_scgi_task_dispatcher_new(void);
+void hev_scgi_task_dispatcher_push(HevSCGITaskDispatcher *self,
+			GObject *scgi_task);
 
 G_END_DECLS
 

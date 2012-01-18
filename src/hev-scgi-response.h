@@ -12,6 +12,7 @@
 #define __HEV_SCGI_RESPONSE_H__
 
 #include <glib-object.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
@@ -38,6 +39,10 @@ struct _HevSCGIResponseClass
 GType hev_scgi_response_get_type(void);
 
 GObject * hev_scgi_response_new(void);
+void hev_scgi_response_set_output_stream(HevSCGIResponse *self,
+			GOutputStream *output_stream);
+void hev_scgi_response_write_header(HevSCGIResponse *self,
+			GFunc callback, gpointer user_data);
 
 G_END_DECLS
 

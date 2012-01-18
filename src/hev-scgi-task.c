@@ -9,6 +9,8 @@
  */
 
 #include "hev-scgi-task.h"
+#include "hev-scgi-request.h"
+#include "hev-scgi-response.h"
 
 #define HEV_SCGI_TASK_GET_PRIVATE(obj)	(G_TYPE_INSTANCE_GET_PRIVATE((obj), HEV_TYPE_SCGI_TASK, HevSCGITaskPrivate))
 
@@ -16,7 +18,8 @@ typedef struct _HevSCGITaskPrivate HevSCGITaskPrivate;
 
 struct _HevSCGITaskPrivate
 {
-	gchar c;
+	GObject *scgi_request;
+	GObject *scgi_response;
 };
 
 G_DEFINE_TYPE(HevSCGITask, hev_scgi_task, G_TYPE_OBJECT);
@@ -27,6 +30,18 @@ static void hev_scgi_task_dispose(GObject * obj)
 	HevSCGITaskPrivate * priv = HEV_SCGI_TASK_GET_PRIVATE(self);
 
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	if(priv->scgi_request)
+	{
+		g_object_unref(priv->scgi_request);
+		priv->scgi_request = NULL;
+	}
+
+	if(priv->scgi_response)
+	{
+		g_object_unref(priv->scgi_response);
+		priv->scgi_response = NULL;
+	}
 
 	G_OBJECT_CLASS(hev_scgi_task_parent_class)->dispose(obj);
 }
@@ -69,12 +84,45 @@ static void hev_scgi_task_class_init(HevSCGITaskClass * klass)
 static void hev_scgi_task_init(HevSCGITask * self)
 {
 	HevSCGITaskPrivate * priv = HEV_SCGI_TASK_GET_PRIVATE(self);
+	
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+	
+	priv->scgi_request = hev_scgi_request_new();
+	if(!priv->scgi_request)
+	  g_critical("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	priv->scgi_response = hev_scgi_response_new();
+	if(!priv->scgi_response)
+	  g_critical("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 }
 
 GObject * hev_scgi_task_new(void)
 {
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 	return g_object_new(HEV_TYPE_SCGI_TASK, NULL);
+}
+
+GObject * hev_scgi_task_get_request(HevSCGITask *self)
+{
+	HevSCGITaskPrivate *priv = NULL;
+
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	g_return_val_if_fail(HEV_IS_SCGI_TASK(self), NULL);
+	priv = HEV_SCGI_TASK_GET_PRIVATE(self);
+
+	return priv->scgi_request;
+}
+
+GObject * hev_scgi_task_get_response(HevSCGITask *self)
+{
+	HevSCGITaskPrivate *priv = NULL;
+
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	g_return_val_if_fail(HEV_IS_SCGI_TASK(self), NULL);
+	priv = HEV_SCGI_TASK_GET_PRIVATE(self);
+
+	return priv->scgi_response;
 }
 

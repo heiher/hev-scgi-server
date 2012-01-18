@@ -38,6 +38,8 @@ struct _HevSCGITaskClass
 GType hev_scgi_task_get_type(void);
 
 GObject * hev_scgi_task_new(void);
+GObject * hev_scgi_task_get_request(HevSCGITask *self);
+GObject * hev_scgi_task_get_response(HevSCGITask *self);
 
 G_END_DECLS
 

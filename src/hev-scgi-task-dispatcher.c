@@ -78,3 +78,9 @@ GObject * hev_scgi_task_dispatcher_new(void)
 	return g_object_new(HEV_TYPE_SCGI_TASK_DISPATCHER, NULL);
 }
 
+void hev_scgi_task_dispatcher_push(HevSCGITaskDispatcher *self,
+			GObject *scgi_task)
+{
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+}
+

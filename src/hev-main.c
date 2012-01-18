@@ -20,11 +20,40 @@ static void signal_register(void)
 	signal(SIGTERM, signal_handler);
 }
 
+static void debug_log_handler(const gchar *log_domain,
+			GLogLevelFlags log_level,
+			const gchar *message,
+			gpointer user_data)
+{
+}
+
 int main(int argc, char *argv[])
 {
 	GObject *scgi_server = NULL;
+	static gboolean debug = FALSE;
+	static GOptionEntry option_entries[] =
+	{
+		{ "debug", 'd', 0, G_OPTION_ARG_NONE,  &debug, "Debug mode", NULL},
+		{ NULL }
+	};
+	GOptionContext *option_context = NULL;
+	GError *error = NULL;
 
 	g_type_init();
+
+	option_context = g_option_context_new("");
+	g_option_context_add_main_entries(option_context,
+				option_entries, NULL);
+	if(!g_option_context_parse(option_context, &argc, &argv, &error))
+	{
+		g_error("%s:%d[%s]=>(%s)", __FILE__, __LINE__, __FUNCTION__,
+					error->message);
+		g_error_free(error);
+	}
+
+	if(!debug)
+	  g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG,
+				  debug_log_handler, NULL);
 
 	main_loop = g_main_loop_new(NULL, FALSE);
 	if(!main_loop)

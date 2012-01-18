@@ -12,6 +12,7 @@
 #define __HEV_SCGI_REQUEST_H__
 
 #include <glib-object.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
@@ -38,6 +39,10 @@ struct _HevSCGIRequestClass
 GType hev_scgi_request_get_type(void);
 
 GObject * hev_scgi_request_new(void);
+void hev_scgi_request_set_input_stream(HevSCGIRequest *self,
+			GInputStream *input_stream);
+void hev_scgi_request_read_header(HevSCGIRequest *self,
+			GFunc callback, gpointer user_data);
 
 G_END_DECLS
 
