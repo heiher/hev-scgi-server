@@ -120,6 +120,9 @@ void hev_scgi_connection_manager_take_over(HevSCGIConnectionManager *self,
 	if(!scgi_task)
 	  g_critical("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
+	hev_scgi_task_set_socket_connection(HEV_SCGI_TASK(scgi_task),
+				G_OBJECT(connection));
+
 	scgi_request = hev_scgi_task_get_request(HEV_SCGI_TASK(scgi_task));
 	scgi_response = hev_scgi_task_get_response(HEV_SCGI_TASK(scgi_task));
 

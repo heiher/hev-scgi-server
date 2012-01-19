@@ -41,6 +41,7 @@ GType hev_scgi_request_get_type(void);
 GObject * hev_scgi_request_new(void);
 void hev_scgi_request_set_input_stream(HevSCGIRequest *self,
 			GInputStream *input_stream);
+GInputStream * hev_scgi_request_get_input_stream(HevSCGIRequest *self);
 void hev_scgi_request_read_header(HevSCGIRequest *self,
 			GFunc callback, gpointer user_data);
 GHashTable * hev_scgi_request_get_header_hash_table(HevSCGIRequest *self);

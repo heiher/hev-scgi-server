@@ -158,6 +158,18 @@ void hev_scgi_request_set_input_stream(HevSCGIRequest *self,
 	priv->input_stream = g_object_ref(input_stream);
 }
 
+GInputStream * hev_scgi_request_get_input_stream(HevSCGIRequest *self)
+{
+	HevSCGIRequestPrivate *priv = NULL;
+
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+	
+	g_return_val_if_fail(HEV_IS_SCGI_REQUEST(self), NULL);
+	priv = HEV_SCGI_REQUEST_GET_PRIVATE(self);
+
+	return priv->input_stream;
+}
+
 void hev_scgi_request_read_header(HevSCGIRequest *self,
 			GFunc callback, gpointer user_data)
 {

@@ -130,6 +130,18 @@ void hev_scgi_response_set_output_stream(HevSCGIResponse *self,
 	priv->output_stream = g_object_ref(output_stream);
 }
 
+GOutputStream * hev_scgi_response_get_output_stream(HevSCGIResponse *self)
+{
+	HevSCGIResponsePrivate *priv = NULL;
+
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+	
+	g_return_val_if_fail(HEV_IS_SCGI_RESPONSE(self), NULL);
+	priv = HEV_SCGI_RESPONSE_GET_PRIVATE(self);
+
+	return priv->output_stream;
+}
+
 void hev_scgi_response_write_header(HevSCGIResponse *self,
 			GFunc callback, gpointer user_data)
 {

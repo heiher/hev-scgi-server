@@ -20,6 +20,7 @@ struct _HevSCGITaskPrivate
 {
 	GObject *scgi_request;
 	GObject *scgi_response;
+	GObject *connection;
 };
 
 G_DEFINE_TYPE(HevSCGITask, hev_scgi_task, G_TYPE_OBJECT);
@@ -41,6 +42,12 @@ static void hev_scgi_task_dispose(GObject * obj)
 	{
 		g_object_unref(priv->scgi_response);
 		priv->scgi_response = NULL;
+	}
+
+	if(priv->connection)
+	{
+		g_object_unref(priv->connection);
+		priv->connection = NULL;
 	}
 
 	G_OBJECT_CLASS(hev_scgi_task_parent_class)->dispose(obj);
@@ -124,5 +131,22 @@ GObject * hev_scgi_task_get_response(HevSCGITask *self)
 	priv = HEV_SCGI_TASK_GET_PRIVATE(self);
 
 	return priv->scgi_response;
+}
+
+void hev_scgi_task_set_socket_connection(HevSCGITask *self,
+			GObject *connection)
+{
+	HevSCGITaskPrivate *priv = NULL;
+
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	g_return_if_fail(HEV_IS_SCGI_TASK(self));
+	g_return_if_fail(G_IS_OBJECT(connection));
+	priv = HEV_SCGI_TASK_GET_PRIVATE(self);
+
+	if(priv->connection)
+	  g_object_unref(priv->connection);
+
+	priv->connection = g_object_ref(connection);
 }
 
