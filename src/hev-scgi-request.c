@@ -237,6 +237,7 @@ static void hev_scgi_request_input_stream_read_async_handler(GObject *source_obj
 	/* Call callback when connection closed by remote or error */
 	if(0 >= size)
 	{
+		priv->header_status = HEADER_STATUS_READED;
 		callback(self, data);
 		return;
 	}
@@ -281,6 +282,7 @@ static void hev_scgi_request_input_stream_read_async_handler(GObject *source_obj
 		}
 		else /* Invalid request, just callback */
 		{
+			priv->header_status = HEADER_STATUS_READED;
 			callback(self, data);
 			return;
 		}
@@ -289,6 +291,7 @@ static void hev_scgi_request_input_stream_read_async_handler(GObject *source_obj
 	}
 
 	hev_scgi_request_parse_header(self);
+	priv->header_status = HEADER_STATUS_READED;
 	callback(self, data);
 }
 

@@ -28,6 +28,7 @@ struct _HevSCGIResponsePrivate
 {
 	GOutputStream *output_stream;
 	guint header_status;
+	GHashTable *header_hash_table;
 };
 
 G_DEFINE_TYPE(HevSCGIResponse, hev_scgi_response, G_TYPE_OBJECT);
@@ -56,6 +57,12 @@ static void hev_scgi_response_finalize(GObject * obj)
 	HevSCGIResponsePrivate * priv = HEV_SCGI_RESPONSE_GET_PRIVATE(self);
 
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	if(priv->header_hash_table)
+	{
+		g_hash_table_destroy(priv->header_hash_table);
+		priv->header_hash_table = NULL;
+	}
 
 	G_OBJECT_CLASS(hev_scgi_response_parent_class)->finalize(obj);
 }
@@ -93,6 +100,11 @@ static void hev_scgi_response_init(HevSCGIResponse * self)
 
 	priv->output_stream = NULL;
 	priv->header_status = HEADER_STATUS_UNWRITE;
+
+	priv->header_hash_table = g_hash_table_new(g_str_hash,
+				g_str_equal);
+	if(!priv->header_hash_table)
+	  g_critical("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 }
 
 GObject * hev_scgi_response_new(void)
@@ -140,5 +152,17 @@ static void hev_scgi_response_output_stream_close_async_handler(GObject *source_
 	g_output_stream_close_finish(G_OUTPUT_STREAM(source_object),
 				res, NULL);
 	g_object_unref(source_object);
+}
+
+GHashTable * hev_scgi_response_get_header_hash_table(HevSCGIResponse *self)
+{
+	HevSCGIResponsePrivate *priv = NULL;
+
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	g_return_val_if_fail(HEV_IS_SCGI_RESPONSE(self), NULL);
+	priv = HEV_SCGI_RESPONSE_GET_PRIVATE(self);
+
+	return priv->header_hash_table;
 }
 

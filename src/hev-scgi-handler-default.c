@@ -21,6 +21,7 @@ struct _HevSCGIHandlerDefaultPrivate
 };
 
 static void hev_scgi_handler_iface_init(HevSCGIHandlerInterface * iface);
+static const gchar * hev_scgi_handler_default_get_name(HevSCGIHandler *self);
 static const gchar * hev_scgi_handler_default_get_pattern(HevSCGIHandler *self);
 static void hev_scgi_handler_default_handle(HevSCGIHandler *self, GObject *scgi_task);
 
@@ -92,6 +93,13 @@ GObject * hev_scgi_handler_default_new(void)
 	return g_object_new(HEV_TYPE_SCGI_HANDLER_DEFAULT, NULL);
 }
 
+static const gchar * hev_scgi_handler_default_get_name(HevSCGIHandler *self)
+{
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	return "HevSCGIHandlerDefault";
+}
+
 static const gchar * hev_scgi_handler_default_get_pattern(HevSCGIHandler *self)
 {
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
@@ -102,5 +110,7 @@ static const gchar * hev_scgi_handler_default_get_pattern(HevSCGIHandler *self)
 static void hev_scgi_handler_default_handle(HevSCGIHandler *self, GObject *scgi_task)
 {
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	g_object_unref(scgi_task);
 }
 

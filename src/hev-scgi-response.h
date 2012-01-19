@@ -43,6 +43,7 @@ void hev_scgi_response_set_output_stream(HevSCGIResponse *self,
 			GOutputStream *output_stream);
 void hev_scgi_response_write_header(HevSCGIResponse *self,
 			GFunc callback, gpointer user_data);
+GHashTable * hev_scgi_response_get_header_hash_table(HevSCGIResponse *self);
 
 G_END_DECLS
 
