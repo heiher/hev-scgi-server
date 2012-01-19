@@ -11,6 +11,7 @@
 #include "hev-scgi-task-dispatcher.h"
 #include "hev-scgi-request.h"
 #include "hev-scgi-task.h"
+#include "hev-scgi-handler.h"
 
 static void hev_scgi_task_dispatcher_dispatch(gpointer data,
 			gpointer user_data);
@@ -139,16 +140,31 @@ static void hev_scgi_task_dispatcher_dispatch(gpointer data,
 
 	for(sl=priv->handler_slist; sl; sl=g_slist_next(sl))
 	{
-		gchar *pattern = NULL;
+		const gchar *pattern = NULL;
 
-		// pattern = hev_scgi_handler_get_pattern(HEV_SCGI_HANDLER(sl->data));
+		pattern = hev_scgi_handler_get_pattern(HEV_SCGI_HANDLER(sl->data));
 		if(g_regex_match_simple(pattern, request_uri, 0, 0))
 		{
-			// hev_scgi_handler_handle(HEV_SCGI_HANDLER(sl->data), scgi_task);
+			hev_scgi_handler_handle(HEV_SCGI_HANDLER(sl->data), scgi_task);
 			return;
 		}
 	}
 
 	g_object_unref(scgi_task);
+}
+
+void hev_scgi_task_dispatcher_add_handler(HevSCGITaskDispatcher *self,
+			GObject *scgi_handler)
+{
+	HevSCGITaskDispatcherPrivate * priv = NULL;
+
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	g_return_if_fail(HEV_IS_SCGI_TASK_DISPATCHER(self));
+	g_return_if_fail(HEV_IS_SCGI_HANDLER(scgi_handler));
+	priv = HEV_SCGI_TASK_DISPATCHER_GET_PRIVATE(self);
+
+	priv->handler_slist = g_slist_append(priv->handler_slist,
+				scgi_handler);
 }
 

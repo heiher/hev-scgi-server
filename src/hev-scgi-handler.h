@@ -29,9 +29,15 @@ typedef struct _HevSCGIHandlerInterface HevSCGIHandlerInterface;
 struct _HevSCGIHandlerInterface
 {
 	GTypeInterface parent_scgi_handler;
+
+	const gchar * (*get_pattern)(HevSCGIHandler *self);
+	void (*handle)(HevSCGIHandler *self, GObject *scgi_task);
 };
 
 GType hev_scgi_handler_get_type(void);
+
+const gchar * hev_scgi_handler_get_pattern(HevSCGIHandler *self);
+void hev_scgi_handler_handle(HevSCGIHandler *self, GObject *scgi_task);
 
 G_END_DECLS
 

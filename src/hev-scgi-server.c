@@ -14,6 +14,7 @@
 #include "hev-scgi-config.h"
 #include "hev-scgi-connection-manager.h"
 #include "hev-scgi-task-dispatcher.h"
+#include "hev-scgi-handler-default.h"
 
 static gboolean socket_service_incoming_handler(GSocketService *service,
 			GSocketConnection *connection, GObject *source_object,
@@ -109,6 +110,7 @@ static void hev_scgi_server_init(HevSCGIServer * self)
 	HevSCGIServerPrivate * priv = HEV_SCGI_SERVER_GET_PRIVATE(self);
 	GSocketAddress *socket_address = NULL;
 	GError *error = NULL;
+	GObject *handler_default = NULL;
 
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
@@ -147,6 +149,11 @@ static void hev_scgi_server_init(HevSCGIServer * self)
 	priv->scgi_task_dispatcher = hev_scgi_task_dispatcher_new();
 	if(!priv->scgi_task_dispatcher)
 	  g_critical("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	/* Add handler-default */
+	handler_default = hev_scgi_handler_default_new();
+	hev_scgi_task_dispatcher_add_handler(HEV_SCGI_TASK_DISPATCHER(priv->scgi_task_dispatcher),
+				handler_default);
 }
 
 GObject * hev_scgi_server_new(void)

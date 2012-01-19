@@ -40,6 +40,8 @@ GType hev_scgi_task_dispatcher_get_type(void);
 GObject * hev_scgi_task_dispatcher_new(void);
 void hev_scgi_task_dispatcher_push(HevSCGITaskDispatcher *self,
 			GObject *scgi_task);
+void hev_scgi_task_dispatcher_add_handler(HevSCGITaskDispatcher *self,
+			GObject *scgi_handler);
 
 G_END_DECLS
 

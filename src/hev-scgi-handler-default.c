@@ -9,6 +9,7 @@
  */
 
 #include "hev-scgi-handler-default.h"
+#include "hev-scgi-handler.h"
 
 #define HEV_SCGI_HANDLER_DEFAULT_GET_PRIVATE(obj)	(G_TYPE_INSTANCE_GET_PRIVATE((obj), HEV_TYPE_SCGI_HANDLER_DEFAULT, HevSCGIHandlerDefaultPrivate))
 
@@ -19,7 +20,12 @@ struct _HevSCGIHandlerDefaultPrivate
 	gchar c;
 };
 
-G_DEFINE_TYPE(HevSCGIHandlerDefault, hev_scgi_handler_default, G_TYPE_OBJECT);
+static void hev_scgi_handler_iface_init(HevSCGIHandlerInterface * iface);
+static const gchar * hev_scgi_handler_default_get_pattern(HevSCGIHandler *self);
+static void hev_scgi_handler_default_handle(HevSCGIHandler *self, GObject *scgi_task);
+
+G_DEFINE_TYPE_WITH_CODE(HevSCGIHandlerDefault, hev_scgi_handler_default, G_TYPE_OBJECT,
+			G_IMPLEMENT_INTERFACE(HEV_TYPE_SCGI_HANDLER, hev_scgi_handler_iface_init));
 
 static void hev_scgi_handler_default_dispose(GObject * obj)
 {
@@ -66,6 +72,14 @@ static void hev_scgi_handler_default_class_init(HevSCGIHandlerDefaultClass * kla
 	g_type_class_add_private(klass, sizeof(HevSCGIHandlerDefaultPrivate));
 }
 
+static void hev_scgi_handler_iface_init(HevSCGIHandlerInterface * iface)
+{
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	iface->get_pattern = hev_scgi_handler_default_get_pattern;
+	iface->handle = hev_scgi_handler_default_handle;
+}
+
 static void hev_scgi_handler_default_init(HevSCGIHandlerDefault * self)
 {
 	HevSCGIHandlerDefaultPrivate * priv = HEV_SCGI_HANDLER_DEFAULT_GET_PRIVATE(self);
@@ -76,5 +90,17 @@ GObject * hev_scgi_handler_default_new(void)
 {
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 	return g_object_new(HEV_TYPE_SCGI_HANDLER_DEFAULT, NULL);
+}
+
+static const gchar * hev_scgi_handler_default_get_pattern(HevSCGIHandler *self)
+{
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	return ".*";
+}
+
+static void hev_scgi_handler_default_handle(HevSCGIHandler *self, GObject *scgi_task)
+{
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 }
 
