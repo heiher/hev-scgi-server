@@ -25,6 +25,7 @@ static void hev_scgi_request_input_stream_read_async_handler(GObject *source_obj
 			GAsyncResult *res, gpointer user_data);
 static void hev_scgi_request_input_stream_close_async_handler(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
+static void hev_scgi_request_parse_header(HevSCGIRequest *self);
 
 #define HEV_SCGI_REQUEST_GET_PRIVATE(obj)	(G_TYPE_INSTANCE_GET_PRIVATE((obj), HEV_TYPE_SCGI_REQUEST, HevSCGIRequestPrivate))
 
@@ -38,7 +39,9 @@ struct _HevSCGIRequestPrivate
 	gsize header_buffer_size;
 	gsize header_buffer_handle_size;
 	gsize header_size;
+	guint header_head_size;
 	gboolean zero_read;
+	GHashTable *header_hash_table;
 };
 
 G_DEFINE_TYPE(HevSCGIRequest, hev_scgi_request, G_TYPE_OBJECT);
@@ -67,6 +70,12 @@ static void hev_scgi_request_finalize(GObject * obj)
 	HevSCGIRequestPrivate * priv = HEV_SCGI_REQUEST_GET_PRIVATE(self);
 
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	if(priv->header_hash_table)
+	{
+		g_hash_table_destroy(priv->header_hash_table);
+		priv->header_hash_table = NULL;
+	}
 
 	if(priv->header_buffer)
 	{
@@ -117,7 +126,13 @@ static void hev_scgi_request_init(HevSCGIRequest * self)
 	priv->header_buffer_size = 0;
 	priv->header_buffer_handle_size = 0;
 	priv->header_size = 0;
+	priv->header_head_size = 0;
 	priv->zero_read = TRUE;
+
+	priv->header_hash_table = g_hash_table_new(g_str_hash,
+				g_str_equal);
+	if(!priv->header_hash_table)
+	  g_critical("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 }
 
 GObject * hev_scgi_request_new(void)
@@ -246,7 +261,8 @@ static void hev_scgi_request_input_stream_read_async_handler(GObject *source_obj
 
 			strs = g_regex_split_simple(":", priv->header_buffer, 0, 0);
 
-			priv->header_size = atoi(strs[0]);
+			priv->header_head_size = strlen(strs[0]) + 1;
+			priv->header_size = atoi(strs[0]) + priv->header_head_size + 1;
 			if(priv->header_buffer_size < priv->header_size)
 			  hev_scgi_request_header_buffer_alloc(self, priv->header_size);
 
@@ -272,8 +288,7 @@ static void hev_scgi_request_input_stream_read_async_handler(GObject *source_obj
 		priv->zero_read = FALSE;
 	}
 
-	// TODO: Parse header
-
+	hev_scgi_request_parse_header(self);
 	callback(self, data);
 }
 
@@ -285,5 +300,66 @@ static void hev_scgi_request_input_stream_close_async_handler(GObject *source_ob
 	g_input_stream_close_finish(G_INPUT_STREAM(source_object),
 				res, NULL);
 	g_object_unref(source_object);
+}
+
+static void hev_scgi_request_parse_header(HevSCGIRequest *self)
+{
+	HevSCGIRequestPrivate *priv = HEV_SCGI_REQUEST_GET_PRIVATE(self);
+	guint i = 0;
+	gchar *key = NULL;
+	gchar *value = NULL;
+	gboolean record = TRUE;
+
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	for(i=priv->header_head_size; i<priv->header_size; i++)
+	{
+		gboolean con = FALSE;
+
+		if(0 == priv->header_buffer[i])
+		{
+			if(!record)
+			{
+				record = TRUE;
+				continue;
+			}
+			else
+			{
+				con = TRUE;
+			}
+		}
+
+		if(!record)
+		  continue;
+
+		if(key)
+		{
+			value = priv->header_buffer + i; 
+
+			g_hash_table_insert(priv->header_hash_table,
+						key, value);
+
+			key = NULL;
+			value = NULL;
+		}
+		else
+		{
+			key = priv->header_buffer + i;
+		}
+
+		record = con;
+	}
+}
+
+GHashTable * hev_scgi_request_get_header_hash_table(HevSCGIRequest *self)
+{
+	HevSCGIRequestPrivate *priv = NULL;
+
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	g_return_val_if_fail(HEV_IS_SCGI_REQUEST(self), NULL);
+	priv = HEV_SCGI_REQUEST_GET_PRIVATE(self);
+
+	return priv->header_hash_table;
 }
 

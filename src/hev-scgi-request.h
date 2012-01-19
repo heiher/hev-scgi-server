@@ -43,6 +43,7 @@ void hev_scgi_request_set_input_stream(HevSCGIRequest *self,
 			GInputStream *input_stream);
 void hev_scgi_request_read_header(HevSCGIRequest *self,
 			GFunc callback, gpointer user_data);
+GHashTable * hev_scgi_request_get_header_hash_table(HevSCGIRequest *self);
 
 G_END_DECLS
 

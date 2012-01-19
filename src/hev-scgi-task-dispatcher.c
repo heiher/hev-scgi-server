@@ -21,7 +21,7 @@ typedef struct _HevSCGITaskDispatcherPrivate HevSCGITaskDispatcherPrivate;
 
 struct _HevSCGITaskDispatcherPrivate
 {
-	gchar c;
+	GSList *handler_slist;
 };
 
 G_DEFINE_TYPE(HevSCGITaskDispatcher, hev_scgi_task_dispatcher, G_TYPE_OBJECT);
@@ -42,6 +42,13 @@ static void hev_scgi_task_dispatcher_finalize(GObject * obj)
 	HevSCGITaskDispatcherPrivate * priv = HEV_SCGI_TASK_DISPATCHER_GET_PRIVATE(self);
 
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	if(priv->handler_slist)
+	{
+		g_slist_free_full(priv->handler_slist,
+					g_object_unref);
+		priv->handler_slist = NULL;
+	}
 
 	G_OBJECT_CLASS(hev_scgi_task_dispatcher_parent_class)->finalize(obj);
 }
@@ -109,12 +116,38 @@ static void hev_scgi_task_dispatcher_dispatch(gpointer data,
 	HevSCGITaskDispatcher *self = NULL;
 	HevSCGITaskDispatcherPrivate * priv = NULL;
 	GObject *scgi_task = G_OBJECT(user_data);
+	GObject *scgi_request = NULL;
+	GHashTable *header_hash_table = NULL;
+	gchar *request_uri = NULL;
+	GSList *sl = NULL;
 
 	self = HEV_SCGI_TASK_DISPATCHER(g_object_get_data(scgi_task,
 					"dispatcher"));
 	priv = HEV_SCGI_TASK_DISPATCHER_GET_PRIVATE(self);
 
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	scgi_request = hev_scgi_task_get_request(HEV_SCGI_TASK(scgi_task));
+	header_hash_table = hev_scgi_request_get_header_hash_table(
+				HEV_SCGI_REQUEST(scgi_request));
+	request_uri = g_hash_table_lookup(header_hash_table, "REQUEST_URI");
+	if(!request_uri)
+	{
+		g_object_unref(scgi_task);
+		return;
+	}
+
+	for(sl=priv->handler_slist; sl; sl=g_slist_next(sl))
+	{
+		gchar *pattern = NULL;
+
+		// pattern = hev_scgi_handler_get_pattern(HEV_SCGI_HANDLER(sl->data));
+		if(g_regex_match_simple(pattern, request_uri, 0, 0))
+		{
+			// hev_scgi_handler_handle(HEV_SCGI_HANDLER(sl->data), scgi_task);
+			return;
+		}
+	}
 
 	g_object_unref(scgi_task);
 }
