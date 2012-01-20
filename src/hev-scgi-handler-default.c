@@ -18,6 +18,7 @@
 
 #define HEV_SCGI_HANDLER_DEFAULT_NAME		"HevSCGIHandlerDefault"
 #define HEV_SCGI_HANDLER_DEFAULT_VERSION	"0.0.1"
+#define HEV_SCGI_HANDLER_DEFAULT_PATTERN	".*"
 
 static void hev_scgi_handler_default_response_write_header_handler(gpointer user,
 			gpointer user_data);
@@ -127,7 +128,7 @@ static const gchar * hev_scgi_handler_default_get_pattern(HevSCGIHandler *self)
 {
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
-	return ".*";
+	return HEV_SCGI_HANDLER_DEFAULT_PATTERN;
 }
 
 static void hev_scgi_handler_default_handle(HevSCGIHandler *self, GObject *scgi_task)
@@ -143,7 +144,7 @@ static void hev_scgi_handler_default_handle(HevSCGIHandler *self, GObject *scgi_
 	res_hash_table = hev_scgi_response_get_header_hash_table(HEV_SCGI_RESPONSE(scgi_response));
 
 	g_hash_table_insert(res_hash_table, "Status", g_strdup("200 OK"));
-	g_hash_table_insert(res_hash_table, "Content-Type", g_strdup("text/plain"));
+	g_hash_table_insert(res_hash_table, "Content-Type", g_strdup("text/html"));
 	hev_scgi_response_write_header(HEV_SCGI_RESPONSE(scgi_response),
 				hev_scgi_handler_default_response_write_header_handler, scgi_task);
 
@@ -173,9 +174,12 @@ static void hev_scgi_handler_default_response_write_header_handler(gpointer user
 	req_hash_table = hev_scgi_request_get_header_hash_table(HEV_SCGI_REQUEST(scgi_request));
 
 	g_object_set_data(G_OBJECT(scgi_task), "str", str);
-	g_string_printf(str, "Handler: %s\r\nRequestURI: %s\r\n"
-				"RemoteAddr: %s\r\nRemotePort: %s",
+	g_string_printf(str, "<strong>Handler:</strong> %s %s<br />"
+				"<strong>RequestURI:</strong> %s<br />"
+				"<strong>RemoteAddr:</strong> %s<br />"
+				"<strong>RemotePort:</strong> %s<br />",
 				hev_scgi_handler_get_name(HEV_SCGI_HANDLER(self)),
+				hev_scgi_handler_get_version(HEV_SCGI_HANDLER(self)),
 				g_hash_table_lookup(req_hash_table, "REQUEST_URI"),
 				g_hash_table_lookup(req_hash_table, "REMOTE_ADDR"),
 				g_hash_table_lookup(req_hash_table, "REMOTE_PORT"));
