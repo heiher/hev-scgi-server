@@ -42,6 +42,8 @@ GObject * hev_scgi_task_get_request(HevSCGITask *self);
 GObject * hev_scgi_task_get_response(HevSCGITask *self);
 void hev_scgi_task_set_socket_connection(HevSCGITask *self,
 			GObject *connection);
+void hev_scgi_task_set_handler(HevSCGITask *self, GObject *handler);
+GObject * hev_scgi_task_get_handler(HevSCGITask *self);
 
 G_END_DECLS
 

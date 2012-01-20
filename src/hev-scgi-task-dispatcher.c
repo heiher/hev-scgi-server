@@ -145,6 +145,7 @@ static void hev_scgi_task_dispatcher_dispatch(gpointer data,
 		pattern = hev_scgi_handler_get_pattern(HEV_SCGI_HANDLER(sl->data));
 		if(g_regex_match_simple(pattern, request_uri, 0, 0))
 		{
+			hev_scgi_task_set_handler(HEV_SCGI_TASK(scgi_task), G_OBJECT(sl->data));
 			hev_scgi_handler_handle(HEV_SCGI_HANDLER(sl->data), scgi_task);
 			return;
 		}
