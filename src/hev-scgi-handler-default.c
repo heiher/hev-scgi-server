@@ -16,6 +16,9 @@
 #include "hev-scgi-request.h"
 #include "hev-scgi-response.h"
 
+#define HEV_SCGI_HANDLER_DEFAULT_NAME		"HevSCGIHandlerDefault"
+#define HEV_SCGI_HANDLER_DEFAULT_VERSION	"0.0.1"
+
 static void hev_scgi_handler_default_response_write_header_handler(gpointer user,
 			gpointer user_data);
 static void hev_scgi_handler_default_output_stream_write_async_handler(GObject *source_object,
@@ -32,6 +35,7 @@ struct _HevSCGIHandlerDefaultPrivate
 
 static void hev_scgi_handler_iface_init(HevSCGIHandlerInterface * iface);
 static const gchar * hev_scgi_handler_default_get_name(HevSCGIHandler *self);
+static const gchar * hev_scgi_handler_default_get_version(HevSCGIHandler *self);
 static const gchar * hev_scgi_handler_default_get_pattern(HevSCGIHandler *self);
 static void hev_scgi_handler_default_handle(HevSCGIHandler *self, GObject *scgi_task);
 
@@ -88,6 +92,7 @@ static void hev_scgi_handler_iface_init(HevSCGIHandlerInterface * iface)
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
 	iface->get_name = hev_scgi_handler_default_get_name;
+	iface->get_version = hev_scgi_handler_default_get_version;
 	iface->get_pattern = hev_scgi_handler_default_get_pattern;
 	iface->handle = hev_scgi_handler_default_handle;
 }
@@ -108,7 +113,14 @@ static const gchar * hev_scgi_handler_default_get_name(HevSCGIHandler *self)
 {
 	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
-	return "HevSCGIHandlerDefault";
+	return HEV_SCGI_HANDLER_DEFAULT_NAME;
+}
+
+static const gchar * hev_scgi_handler_default_get_version(HevSCGIHandler *self)
+{
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	return HEV_SCGI_HANDLER_DEFAULT_VERSION;
 }
 
 static const gchar * hev_scgi_handler_default_get_pattern(HevSCGIHandler *self)

@@ -30,6 +30,19 @@ const gchar * hev_scgi_handler_get_name(HevSCGIHandler *self)
 	return iface->get_name(self);
 }
 
+const gchar * hev_scgi_handler_get_version(HevSCGIHandler *self)
+{
+	HevSCGIHandlerInterface *iface = NULL;
+
+	g_debug("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
+	g_return_if_fail(HEV_IS_SCGI_HANDLER(self));
+	iface = HEV_SCGI_HANDLER_GET_INTERFACE(self);
+	g_return_if_fail(iface->get_version);
+
+	return iface->get_version(self);
+}
+
 const gchar * hev_scgi_handler_get_pattern(HevSCGIHandler *self)
 {
 	HevSCGIHandlerInterface *iface = NULL;
