@@ -41,6 +41,9 @@ int main(int argc, char *argv[])
 
 	g_type_init();
 
+	if(!g_module_supported())
+	  g_error("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
+
 	option_context = g_option_context_new("");
 	g_option_context_add_main_entries(option_context,
 				option_entries, NULL);
