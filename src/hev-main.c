@@ -3,6 +3,9 @@
  */
 
 #include <signal.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 #include "hev-main.h"
 #include "hev-scgi-server.h"
@@ -31,8 +34,10 @@ int main(int argc, char *argv[])
 {
 	GObject *scgi_server = NULL;
 	static gboolean debug = FALSE;
+	static gchar *user = NULL;
 	static GOptionEntry option_entries[] =
 	{
+		{ "user", 'u', 0, G_OPTION_ARG_STRING,  &user, "User name", NULL},
 		{ "debug", 'd', 0, G_OPTION_ARG_NONE,  &debug, "Debug mode", NULL},
 		{ NULL }
 	};
@@ -54,9 +59,23 @@ int main(int argc, char *argv[])
 		g_error_free(error);
 	}
 
+	if(user)
+	{
+		struct passwd *pwd = NULL;
+
+		pwd = getpwnam(user);
+		if((-1==setuid(pwd->pw_uid)) ||
+					(-1==setgid(pwd->pw_gid)))
+		  g_error("%s:%d[%s]=>(%s)", __FILE__, __LINE__,
+					  __FUNCTION__, "Set uid or gid failed!");
+	}
+
 	if(!debug)
-	  g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG,
-				  debug_log_handler, NULL);
+	{
+		g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG,
+					debug_log_handler, NULL);
+		daemon(1, 1);
+	}
 
 	main_loop = g_main_loop_new(NULL, FALSE);
 	if(!main_loop)
