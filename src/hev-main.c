@@ -64,10 +64,9 @@ int main(int argc, char *argv[])
 		struct passwd *pwd = NULL;
 
 		pwd = getpwnam(user);
-		if((-1==setuid(pwd->pw_uid)) ||
-					(-1==setgid(pwd->pw_gid)))
+		if(-1 == setuid(pwd->pw_uid))
 		  g_error("%s:%d[%s]=>(%s)", __FILE__, __LINE__,
-					  __FUNCTION__, "Set uid or gid failed!");
+					  __FUNCTION__, "Set uid failed!");
 	}
 
 	if(!debug)
