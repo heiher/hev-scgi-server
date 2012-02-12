@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
 					error->message);
 		g_error_free(error);
 	}
+	g_option_context_free(option_context);
 
 	if(user)
 	{
