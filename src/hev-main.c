@@ -10,17 +10,13 @@
 #include "hev-main.h"
 #include "hev-scgi-server.h"
 
-static GMainLoop *main_loop = NULL;
-
-static void signal_handler(int signal)
+static gboolean unix_signal_handler(gpointer user_data)
 {
+	GMainLoop *main_loop = user_data;
+
 	g_main_loop_quit(main_loop);
-}
 
-static void signal_register(void)
-{
-	signal(SIGINT, signal_handler);
-	signal(SIGTERM, signal_handler);
+	return FALSE;
 }
 
 static void debug_log_handler(const gchar *log_domain,
@@ -32,6 +28,7 @@ static void debug_log_handler(const gchar *log_domain,
 
 int main(int argc, char *argv[])
 {
+	GMainLoop *main_loop = NULL;
 	GObject *scgi_server = NULL;
 	static gboolean debug = FALSE;
 	static gchar *user = NULL;
@@ -86,7 +83,8 @@ int main(int argc, char *argv[])
 	  g_error("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
 	hev_scgi_server_start(HEV_SCGI_SERVER(scgi_server));
-	signal_register();
+	g_unix_signal_add(SIGINT, unix_signal_handler, main_loop);
+	g_unix_signal_add(SIGTERM, unix_signal_handler, main_loop);
 
 	g_main_loop_run(main_loop);
 
