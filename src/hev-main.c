@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
+#include <grp.h>
 
 #include "hev-main.h"
 #include "hev-scgi-server.h"
@@ -32,9 +33,11 @@ int main(int argc, char *argv[])
 	GObject *scgi_server = NULL;
 	static gboolean debug = FALSE;
 	static gchar *user = NULL;
+	static gchar *group = NULL;
 	static GOptionEntry option_entries[] =
 	{
 		{ "user", 'u', 0, G_OPTION_ARG_STRING,  &user, "User name", NULL},
+		{ "group", 'g', 0, G_OPTION_ARG_STRING,  &group, "Group name", NULL},
 		{ "debug", 'd', 0, G_OPTION_ARG_NONE,  &debug, "Debug mode", NULL},
 		{ NULL }
 	};
@@ -57,11 +60,36 @@ int main(int argc, char *argv[])
 	}
 	g_option_context_free(option_context);
 
+	if(group)
+	{
+		struct group *grp = NULL;
+
+		if(NULL == (grp = getgrnam(group)))
+		  g_error("%s:%d[%s]=>(%s)", __FILE__, __LINE__,
+					  __FUNCTION__, "Get group failed!");
+
+		if(-1 == setgid(grp->gr_gid))
+		  g_error("%s:%d[%s]=>(%s)", __FILE__, __LINE__,
+					  __FUNCTION__, "Set gid failed!");
+		if(-1 == setgroups(0, NULL))
+		  g_error("%s:%d[%s]=>(%s)", __FILE__, __LINE__,
+					  __FUNCTION__, "Set groups failed!");
+		if(user)
+		{
+			if(-1 == initgroups(user, grp->gr_gid))
+			  g_error("%s:%d[%s]=>(%s)", __FILE__, __LINE__,
+						  __FUNCTION__, "Init groups failed!");
+		}
+	}
+
 	if(user)
 	{
 		struct passwd *pwd = NULL;
 
-		pwd = getpwnam(user);
+		if(NULL == (pwd = getpwnam(user)))
+		  g_error("%s:%d[%s]=>(%s)", __FILE__, __LINE__,
+					  __FUNCTION__, "Get user failed!");
+
 		if(-1 == setuid(pwd->pw_uid))
 		  g_error("%s:%d[%s]=>(%s)", __FILE__, __LINE__,
 					  __FUNCTION__, "Set uid failed!");
