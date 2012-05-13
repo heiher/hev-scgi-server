@@ -11,6 +11,9 @@
 #include "hev-main.h"
 #include "hev-scgi-server.h"
 
+static void worker_child_watch_handler(GPid pid, gint status,
+			gpointer user_data);
+
 static gboolean unix_signal_handler(gpointer user_data)
 {
 	GMainLoop *main_loop = user_data;
@@ -27,6 +30,36 @@ static void debug_log_handler(const gchar *log_domain,
 {
 }
 
+static GPid spawn_worker(GObject *server)
+{
+	pid_t pid = -1;
+
+	g_return_val_if_fail(HEV_IS_SCGI_SERVER(server), FALSE);
+
+	pid = fork();
+	switch(pid)
+	{
+	case -1: /* error */
+		g_warning("%s:%d[%s]=>(Spawn worker failed!)",
+					__FILE__, __LINE__, __FUNCTION__);
+		break;
+	case 0:  /* child */
+		break;
+	default: /* parent */
+		g_child_watch_add(pid, worker_child_watch_handler,
+					server);
+		break;
+	}
+
+	return pid;
+}
+
+static void worker_child_watch_handler(GPid pid, gint status,
+			gpointer user_data)
+{
+	spawn_worker(G_OBJECT(user_data));
+}
+
 int main(int argc, char *argv[])
 {
 	GMainLoop *main_loop = NULL;
@@ -34,15 +67,18 @@ int main(int argc, char *argv[])
 	static gboolean debug = FALSE;
 	static gchar *user = NULL;
 	static gchar *group = NULL;
+	static gint worker = -1;
 	static GOptionEntry option_entries[] =
 	{
-		{ "user", 'u', 0, G_OPTION_ARG_STRING,  &user, "User name", NULL},
-		{ "group", 'g', 0, G_OPTION_ARG_STRING,  &group, "Group name", NULL},
-		{ "debug", 'd', 0, G_OPTION_ARG_NONE,  &debug, "Debug mode", NULL},
+		{ "user", 'u', 0, G_OPTION_ARG_STRING,  &user, "User name", NULL },
+		{ "group", 'g', 0, G_OPTION_ARG_STRING,  &group, "Group name", NULL },
+		{ "worker", 'w', 0, G_OPTION_ARG_INT, &worker, "Worker count", NULL },
+		{ "debug", 'd', 0, G_OPTION_ARG_NONE,  &debug, "Debug mode", NULL },
 		{ NULL }
 	};
 	GOptionContext *option_context = NULL;
 	GError *error = NULL;
+	gint i = 0;
 
 	g_type_init();
 
@@ -111,6 +147,14 @@ int main(int argc, char *argv[])
 	  g_error("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
 	hev_scgi_server_start(HEV_SCGI_SERVER(scgi_server));
+
+	/* spawn workers */
+	for(i=0; i<worker; i++)
+	{
+		if(0 == spawn_worker(scgi_server))
+		  break;
+	}
+
 	g_unix_signal_add(SIGINT, unix_signal_handler, main_loop);
 	g_unix_signal_add(SIGTERM, unix_signal_handler, main_loop);
 
