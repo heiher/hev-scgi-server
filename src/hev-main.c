@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 	static gboolean debug = FALSE;
 	static gchar *user = NULL;
 	static gchar *group = NULL;
-	static gint worker = -1;
+	static gint worker = 1;
 	static GOptionEntry option_entries[] =
 	{
 		{ "user", 'u', 0, G_OPTION_ARG_STRING,  &user, "User name", NULL },
