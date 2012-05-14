@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
 	};
 	GOptionContext *option_context = NULL;
 	GError *error = NULL;
+	gboolean parent = TRUE;
 	gint i = 0;
 
 	g_type_init();
@@ -146,21 +147,28 @@ int main(int argc, char *argv[])
 	if(!scgi_server)
 	  g_error("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
-	hev_scgi_server_start(HEV_SCGI_SERVER(scgi_server));
+	hev_scgi_server_stop(HEV_SCGI_SERVER(scgi_server));
 
 	/* spawn workers */
 	for(i=0; i<worker; i++)
 	{
 		if(0 == spawn_worker(scgi_server))
-		  break;
+		{
+			parent = FALSE;
+			break;
+		}
 	}
+
+	if(!parent)
+	  hev_scgi_server_start(HEV_SCGI_SERVER(scgi_server));
 
 	g_unix_signal_add(SIGINT, unix_signal_handler, main_loop);
 	g_unix_signal_add(SIGTERM, unix_signal_handler, main_loop);
 
 	g_main_loop_run(main_loop);
 
-	hev_scgi_server_stop(HEV_SCGI_SERVER(scgi_server));
+	if(!parent)
+	  hev_scgi_server_stop(HEV_SCGI_SERVER(scgi_server));
 
 	g_object_unref(G_OBJECT(scgi_server));
 	g_main_loop_unref(main_loop);
