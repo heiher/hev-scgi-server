@@ -5,12 +5,16 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <pwd.h>
-#include <grp.h>
 
 #include "hev-main.h"
 #include "hev-scgi-server.h"
 
+#ifdef G_OS_UNIX
+#include <pwd.h>
+#include <grp.h>
+#endif /* G_OS_UNIX */
+
+#ifdef G_OS_UNIX
 static gboolean unix_signal_handler(gpointer user_data)
 {
 	GMainLoop *main_loop = user_data;
@@ -19,6 +23,7 @@ static gboolean unix_signal_handler(gpointer user_data)
 
 	return FALSE;
 }
+#endif /* G_OS_UNIX */
 
 static void debug_log_handler(const gchar *log_domain,
 			GLogLevelFlags log_level,
@@ -32,12 +37,16 @@ int main(int argc, char *argv[])
 	GMainLoop *main_loop = NULL;
 	GObject *scgi_server = NULL;
 	static gboolean debug = FALSE;
+#ifdef G_OS_UNIX
 	static gchar *user = NULL;
 	static gchar *group = NULL;
+#endif /* G_OS_UNIX */
 	static GOptionEntry option_entries[] =
 	{
+#ifdef G_OS_UNIX
 		{ "user", 'u', 0, G_OPTION_ARG_STRING,  &user, "User name", NULL},
 		{ "group", 'g', 0, G_OPTION_ARG_STRING,  &group, "Group name", NULL},
+#endif /* G_OS_UNIX */
 		{ "debug", 'd', 0, G_OPTION_ARG_NONE,  &debug, "Debug mode", NULL},
 		{ NULL }
 	};
@@ -62,6 +71,7 @@ int main(int argc, char *argv[])
 	}
 	g_option_context_free(option_context);
 
+#ifdef G_OS_UNIX
 	if(group)
 	{
 		struct group *grp = NULL;
@@ -96,12 +106,15 @@ int main(int argc, char *argv[])
 		  g_error("%s:%d[%s]=>(%s)", __FILE__, __LINE__,
 					  __FUNCTION__, "Set uid failed!");
 	}
+#endif /* G_OS_UNIX */
 
 	if(!debug)
 	{
 		g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG,
 					debug_log_handler, NULL);
+#ifdef G_OS_UNIX
 		daemon(1, 1);
+#endif /* G_OS_UNIX */
 	}
 
 	main_loop = g_main_loop_new(NULL, FALSE);
@@ -113,8 +126,10 @@ int main(int argc, char *argv[])
 	  g_error("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
 	hev_scgi_server_start(HEV_SCGI_SERVER(scgi_server));
+#ifdef G_OS_UNIX
 	g_unix_signal_add(SIGINT, unix_signal_handler, main_loop);
 	g_unix_signal_add(SIGTERM, unix_signal_handler, main_loop);
+#endif /* G_OS_UNIX */
 
 	g_main_loop_run(main_loop);
 
