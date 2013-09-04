@@ -44,7 +44,9 @@ int main(int argc, char *argv[])
 	GOptionContext *option_context = NULL;
 	GError *error = NULL;
 
+#ifndef GLIB_VERSION_2_36
 	g_type_init();
+#endif
 
 	if(!g_module_supported())
 	  g_error("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
