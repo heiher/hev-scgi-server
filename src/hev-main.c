@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
 {
 	GMainLoop *main_loop = NULL;
 	GObject *scgi_server = NULL;
+	static gchar *conf_dir = NULL;
 	static gboolean debug = FALSE;
 #ifdef G_OS_UNIX
 	static gchar *user = NULL;
@@ -43,6 +44,7 @@ int main(int argc, char *argv[])
 #endif /* G_OS_UNIX */
 	static GOptionEntry option_entries[] =
 	{
+		{ "conf", 'c', 0, G_OPTION_ARG_STRING,  &conf_dir, "Config directory", NULL},
 #ifdef G_OS_UNIX
 		{ "user", 'u', 0, G_OPTION_ARG_STRING,  &user, "User name", NULL},
 		{ "group", 'g', 0, G_OPTION_ARG_STRING,  &group, "Group name", NULL},
@@ -121,7 +123,7 @@ int main(int argc, char *argv[])
 	if(!main_loop)
 	  g_error("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
-	scgi_server = hev_scgi_server_new();
+	scgi_server = hev_scgi_server_new(conf_dir);
 	if(!scgi_server)
 	  g_error("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
