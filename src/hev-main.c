@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <gmodule.h>
 
 #include "hev-main.h"
 #include "hev-scgi-server.h"
@@ -12,6 +13,7 @@
 #ifdef G_OS_UNIX
 #include <pwd.h>
 #include <grp.h>
+#include <glib-unix.h>
 #endif /* G_OS_UNIX */
 
 #ifdef G_OS_UNIX
