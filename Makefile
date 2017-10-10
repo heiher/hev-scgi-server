@@ -7,14 +7,19 @@ PP=$(CROSS_PREFIX)cpp
 CC=$(CROSS_PREFIX)gcc
 STRIP=$(CROSS_PREFIX)strip
 PKG_DEPS=glib-2.0 gio-2.0 gmodule-2.0
-CCFLAGS=-O3 `pkg-config --cflags $(PKG_DEPS)` -I../hev-scgi-server-library/include
-LDFLAGS=`pkg-config --libs $(PKG_DEPS)` -L../hev-scgi-server-library/bin -lhev-scgi-server
+CCFLAGS=-O3 -Wall -Werror \
+	-I$(THIRDPARTDIR)/hev-scgi-server-library/include \
+	`pkg-config --cflags $(PKG_DEPS)`
+LDFLAGS=-L$(THIRDPARTDIR)/hev-scgi-server-library/bin -lhev-scgi-server \
+	`pkg-config --libs $(PKG_DEPS)`
  
 SRCDIR=src
 BINDIR=bin
 BUILDDIR=build
+THIRDPARTDIR=third-part
  
 TARGET=$(BINDIR)/hev-scgi-server
+THIRDPARTS=$(THIRDPARTDIR)/hev-scgi-server-library
 
 CCOBJS=$(wildcard $(SRCDIR)/*.c)
 LDOBJS=$(patsubst $(SRCDIR)%.c,$(BUILDDIR)%.o,$(CCOBJS))
@@ -32,12 +37,20 @@ ifeq ($(V),1)
        undefine ECHO_PREFIX
 endif
 
-all : $(TARGET)
+.PHONY: all clean tp-all tp-clean
+
+all : tp-all $(TARGET)
  
-clean : 
+clean : tp-clean
 	$(ECHO_PREFIX) $(RM) $(BINDIR)/* $(BUILDDIR)/*
 	@echo -e $(CLEANMSG)
  
+tp-all : $(THIRDPARTS)
+	@$(foreach dir,$^,make --no-print-directory -C $(dir);)
+
+tp-clean : $(THIRDPARTS)
+	@$(foreach dir,$^,make --no-print-directory -C $(dir) clean;)
+
 $(TARGET) : $(LDOBJS)
 	$(ECHO_PREFIX) $(CC) -o $@ $^ $(LDFLAGS)
 	@echo -e $(LINKMSG)
