@@ -129,6 +129,9 @@ int main(int argc, char *argv[])
 	if(!scgi_server)
 	  g_error("%s:%d[%s]", __FILE__, __LINE__, __FUNCTION__);
 
+	hev_scgi_server_load_extern_handlers(HEV_SCGI_SERVER(scgi_server));
+	hev_scgi_server_load_default_handler(HEV_SCGI_SERVER(scgi_server));
+
 	hev_scgi_server_start(HEV_SCGI_SERVER(scgi_server));
 #ifdef G_OS_UNIX
 	g_unix_signal_add(SIGINT, unix_signal_handler, main_loop);
